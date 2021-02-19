@@ -113,6 +113,7 @@ deploy:
           fi                
  
     script: 
+        - pwd && cd $CI_BUILDS_DIR/
         - echo "Set index location web"
         - ansible-playbook -i hosts playbook/playbook.yml --syntax-check
         - ansible-playbook -i hosts playbook/playbook.yml  
@@ -159,7 +160,8 @@ deploy:
 cleanup_job:
     stage: cleanup
     script:        
-        - rm -rf $CI_BUILDS_DIR/*        
+        - rm -rf $CI_BUILDS_DIR/*
+        - rm -rf $CI_BUILDS_DIR/*.        
         - exit 0
     when: always
 
