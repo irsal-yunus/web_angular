@@ -50,10 +50,11 @@ build:
           if [ ! ${#TERM} > 0 ]; then
             export TERM=xterm;
           else
-            echo "Environment variable TERM already defined!";
-            npm install --cache /tmp/empty-cache
+            echo "Environment variable TERM already defined!";            
             npm uninstall -g angular-cli;
-            npm cache clean;
+            npm cache clean --force;
+            rm -rf /usr/local/bin/ng;
+            rm -rf /usr/bin/ng;            
             npm install -g @angular/cli@10.0.1;
           fi
         - echo -e "export PATH=$(npm prefix -g)/bin:$PATH" >> ~/.bashrc
