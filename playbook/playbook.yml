@@ -1,0 +1,23 @@
+- name: Setup Configuration Development With Ansible
+  hosts: localhost
+  connection: local
+  gather_facts: false 
+
+  tasks:
+    - name: Replace a Line index.html other string
+      lineinfile:
+        path: /var/www/html/index.html
+        # The String to Search 
+        regexp: "window.location.href = "/development";"
+        # The String to Replace
+        line: "window.location.href = "/app";"		 
+        state: present
+        backup: yes
+
+    - name: Display files content
+      debug:
+        msg: "{{ lookup('file', '/var/www/html/index.html') }}"
+
+    
+
+  

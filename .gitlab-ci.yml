@@ -100,6 +100,7 @@ deploy:
         - | 
           if [ -e "app`date +%y_%m_%d`.tar.gz" ]; then 
             echo "Yes, file exists"; 
+            rm -rf /var/www/html/app;
           else 
             echo "Compres Proses..."; 
             if [[ ! -d "app" ]]
