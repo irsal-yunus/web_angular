@@ -45,12 +45,12 @@ build:
       - if: '$CI_MERGE_REQUEST_SOURCE_BRANCH_NAME'      
       - if: '$CI_COMMIT_TAG != ""'   
 
-    script:        
-        - pwd && cd $CI_BUILDS_DIR 
-        - ng version   
+    script: 
+        - pwd && cd $CI_BUILDS_DIR           
         - rm package-lock.json 
         - npm install   
-        - npm link @angular/cli            
+        - npm link @angular/cli 
+        - ng version 
         - ng build --prod --base-href /app/
 
     retry:
