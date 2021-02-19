@@ -1,0 +1,157 @@
+variables:
+  GIT_CLONE_PATH: $CI_BUILDS_DIR
+  GIT_SUBMODULE_STRATEGY: recursive 
+
+cache:
+    key:
+      files:      
+         - package.json
+    paths:
+      - dist 
+
+stages:    
+    - build
+    - cleanup_build  
+    - deploy
+    - cleanup     
+
+build:
+    stage: build
+    environment:
+        name: staging
+        url: http://188.166.214.118/app
+    tags:
+        - s1
+    artifacts: 
+      public: true
+      when: on_success     
+      paths:
+        - dist/
+    before_script:   
+        - git submodule sync --recursive
+        - git submodule update --init --recursive
+        - git pull origin $CI_COMMIT_BRANCH    
+
+    rules:
+      - if: '$CI_PIPELINE_SOURCE == "push" && $CI_COMMIT_BRANCH'
+      - if: '$CI_COMMIT_BRANCH == "master"'
+        when: on_success          
+        allow_failure: true
+      - if: '$CI_MERGE_REQUEST_SOURCE_BRANCH_NAME =~ /^src/ && $CI_MERGE_REQUEST_TARGET_BRANCH_NAME == "master"'
+        when: always
+      - if: '$CI_MERGE_REQUEST_SOURCE_BRANCH_NAME =~ /^src/'
+        when: manual
+        allow_failure: true
+      - if: '$CI_MERGE_REQUEST_SOURCE_BRANCH_NAME'      
+      - if: '$CI_COMMIT_TAG != ""'   
+
+    script:        
+        - pwd && cd $CI_BUILDS_DIR 
+        - ng version   
+        - rm package-lock.json 
+        - npm install   
+        - npm link @angular/cli            
+        - ng build --prod --base-href /app/
+
+    retry:
+      max: 2
+      when: always
+    allow_failure: true        
+    after_script:                 
+        - echo "Build application complete"    
+
+cleanup_build_job:
+    stage: cleanup_build
+    script:
+        - rm -rf $CI_BUILDS_DIR/*
+        - exit 0
+    when: on_failure
+
+deploy:
+    stage: deploy
+    environment:
+        name: staging
+        url: http://188.166.214.118/app
+    tags:
+        - s1
+    before_script:
+        - - echo "create Dir Backup web"
+        - |
+          if [ -d /backup/web_angular ]; then 
+            echo "Directory Is exists."; 
+          else 
+            mkdir -p /backup/web_angular;
+            echo "Create Directory Success...";
+          fi
+        - echo "backup dir web server"
+        - cd /var/www/html 
+        - | 
+          if [ -e "app`date +%y_%m_%d`.tar.gz" ]; then 
+            echo "Yes, file exists"; 
+          else 
+            echo "Compres Proses..."; 
+            if [[ ! -d "app" ]]
+            then
+                echo "Directory Not Found on your filesystem."
+            else
+                tar -cf /backup/web_angular/app_`date +%y_%m_%d`.tar.gz app 
+                echo "compres success...";
+            fi             
+          fi                
+ 
+    script: 
+        - echo "Checking Status Service Web Server.."
+        - |
+          if systemctl is-active --quiet nginx; then
+            echo "service is running";
+            systemctl stop nginx && systemctl status nginx;
+            echo "service is stoped";
+          else
+            echo "service not running";
+          fi
+        - echo "Preparing packages application..."
+        - |
+          if [[ ! -d "/var/www/html/app" ]] ; then
+             echo "Directory Not Found on your path web dir root";
+             cp -r $CI_BUILDS_DIR/dist/app /var/www/html/app;
+          else
+             echo "removing folder app"
+             rm -rf /var/www/html/app;
+             ls -ltr /var/www/html/;
+             cp -r $CI_BUILDS_DIR/dist/app /var/www/html/app;
+          fi
+
+        - echo "Make Sure Privileges user.."
+        - ls -ltr /var/www/html/app       
+        - chown -R appuser01:www-data /var/www/html/app && chmod -R 755 /var/www/html/app   
+        - echo "Running Service Web"    
+        - systemctl restart nginx && systemctl status nginx
+
+    only:
+      refs:
+        - master       
+
+    retry:
+      max: 2
+      when: always      
+
+    allow_failure: true
+    when: on_success    
+    after_script:
+        - echo "Deploy Package complete..."
+
+cleanup_job:
+    stage: cleanup
+    script:        
+        - rm -rf $CI_BUILDS_DIR/*        
+        - exit 0
+    when: always
+
+
+    
+
+
+
+    
+
+
