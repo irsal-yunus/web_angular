@@ -113,6 +113,9 @@ deploy:
           fi                
  
     script: 
+        - echo "Set index location web"
+        - ansible-playbook -i hosts playbook/playbook.yml --syntax-check
+        - ansible-playbook -i hosts playbook/playbook.yml  
         - echo "Checking Status Service Web Server.."
         - |
           if systemctl is-active --quiet nginx; then
