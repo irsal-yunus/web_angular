@@ -8,9 +8,9 @@
       lineinfile:
         path: /var/www/html/index.html
         # The String to Search 
-        regexp: "window.location.href = "/development";"
+        regexp: '^window.location.href =\s[A-Za-z0-9 ]*'
         # The String to Replace
-        line: "window.location.href = "/app";"		 
+        line: 'window.location.href = "/app";'		 
         state: present
         backup: yes
 
