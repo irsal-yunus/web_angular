@@ -46,12 +46,12 @@ build:
       - if: '$CI_COMMIT_TAG != ""'   
 
     script: 
-        - pwd && cd $CI_BUILDS_DIR           
+        - echo -e "export PATH=$(npm prefix -g)/bin:$PATH" >> ~/.bashrc
+        - source ~/.bashrc
+        - ng --version
+        - pwd && cd $CI_BUILDS_DIR                   
         - rm package-lock.json 
-        - npm install 
-        - npm install -g @angular/cli@10.0.1          
-        #- npm link @angular/cli 
-        - ng version 
+        - npm install         
         - ng build --prod --base-href /app/
 
     retry:
