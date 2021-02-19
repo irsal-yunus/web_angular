@@ -58,11 +58,11 @@ build:
             npm install -g @angular/cli@10.0.1;
           fi
         - echo -e "export PATH=$(npm prefix -g)/bin:$PATH" >> ~/.bashrc
-        - source ~/.bashrc
-        - ng --version
+        - source ~/.bashrc        
         - pwd && cd $CI_BUILDS_DIR                   
         - rm package-lock.json 
-        - npm install         
+        - npm install   
+        - ng --version      
         - ng build --prod --base-href /app/
 
     retry:
