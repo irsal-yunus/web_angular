@@ -13,6 +13,7 @@ cache:
     key:
       files:      
          - package-lock.json
+         - package.json
     paths:
       - node_modules 
     policy: pull
@@ -22,6 +23,7 @@ cache:
     key:
       files:
         - package-lock.json
+        - package.json
     paths:
       - node_modules
     policy: pull
@@ -42,7 +44,8 @@ install_dependencies:
       policy: pull-push
     only:
       changes:
-        - package-lock.json   
+        - package-lock.json 
+        - package.json  
 
 build:
     stage: build
