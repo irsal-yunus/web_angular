@@ -36,6 +36,7 @@ install_dependencies:
     tags:
         - s1
     script:
+      - npm cache clean --force
       - npm install
 
   # Redefine cache to have default pull-push policy
