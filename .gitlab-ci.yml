@@ -12,7 +12,7 @@ variables:
 cache:
     key:
       files:      
-         #- package-lock.json
+         - package-lock.json
          - package.json
     paths:
       - node_modules 
@@ -22,7 +22,7 @@ cache:
   cache:
     key:
       files:
-        #- package-lock.json
+        - package-lock.json
         - package.json
     paths:
       - node_modules
@@ -61,8 +61,13 @@ build:
 
     before_script:
         - npm cache clean --force
+        
 
     script:        
+        - pwd && cd $CI_BUILDS_DIR
+        - rm -rf $CI_BUILDS_DIR/package-lock.json
+        - rm -rf $CI_BUILDS_DIR/node_modules 
+        - npm install --force
         - ng build --prod --aot --output-hashing=all --base-href /app/
 
     after_script:                 
