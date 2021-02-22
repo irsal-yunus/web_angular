@@ -7,7 +7,7 @@ cache:
       files:      
          - package.json
     paths:
-      - dist 
+      - node_modules 
 
 stages:    
     - build
