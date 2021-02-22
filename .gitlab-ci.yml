@@ -131,9 +131,7 @@ deploy:
           if [[ ! -d "/var/www/html/app" ]] ; then
              echo "Directory Not Found on your path web dir root";             
           else
-             echo "removing folder app"
-             rm -rf /var/www/html/app;
-             ls -ltr /var/www/html/;
+             echo "Update Package app";             
              rsync -avzh --progress $CI_BUILDS_DIR/dist/app/ /var/www/html/app;             
           fi
 
