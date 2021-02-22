@@ -6,7 +6,7 @@ stages:
 
 variables:
   GIT_CLONE_PATH: $CI_BUILDS_DIR
-  APP_OUTPUT_PATH: "$CI_PROJECT_DIR/artifacts/app"
+  APP_OUTPUT_PATH: "$CI_PROJECT_DIR/dist/app"
   GIT_SUBMODULE_STRATEGY: recursive 
 
 cache:
