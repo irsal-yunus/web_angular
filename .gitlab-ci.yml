@@ -2,6 +2,8 @@ stages:
     - install
     - build
     - cleanup_build 
+    - deploy
+    - cleanup
     
 
 variables:
@@ -91,3 +93,86 @@ cleanup_build_job:
         - rm -rf $CI_BUILDS_DIR/*
         - exit 0
     when: on_failure
+
+deploy:
+    stage: deploy
+    environment:
+        name: staging
+        url: http://188.166.214.118/app
+    tags:
+        - s1
+    before_script:
+        - - echo "create Dir Backup web"
+        - |
+          if [ -d /backup/web_angular ]; then 
+            echo "Directory Is exists."; 
+          else 
+            mkdir -p /backup/web_angular;
+            echo "Create Directory Success...";
+          fi
+        - echo "backup dir web server"
+        - cd /var/www/html 
+        - | 
+          if [ -e "app`date +%y_%m_%d`.tar.gz" ]; then 
+            echo "Yes, file exists"; 
+            rm -rf /var/www/html/app;
+          else 
+            echo "Compres Proses..."; 
+            if [[ ! -d "app" ]]
+            then
+                echo "Directory Not Found on your filesystem."
+            else
+                tar -cf /backup/web_angular/app_`date +%y_%m_%d`.tar.gz app 
+                echo "compres success...";
+            fi             
+          fi                
+ 
+    script: 
+        - pwd && cd $CI_BUILDS_DIR/
+        - echo "Set index location web"
+        - ansible-playbook -i hosts playbook/playbook.yml --syntax-check
+        - ansible-playbook -i hosts playbook/playbook.yml  
+        - echo "Checking Status Service Web Server.."
+        - |
+          if systemctl is-active --quiet nginx; then
+            echo "service is running";
+            systemctl stop nginx && systemctl status nginx;
+            echo "service is stoped";
+          else
+            echo "service not running";
+          fi
+        - echo "Preparing packages application..."
+        - |
+          if [[ ! -d "/var/www/html/app" ]] ; then
+             echo "Directory Not Found on your path web dir root";             
+          else
+             echo "Update Package app";             
+             rsync -avzh --progress $CI_BUILDS_DIR/dist/app/ /var/www/html/app;             
+          fi
+
+        - echo "Make Sure Privileges user.."
+        - ls -ltr /var/www/html/app       
+        - chown -R appuser01:www-data /var/www/html/app && chmod -R 755 /var/www/html/app   
+        - echo "Running Service Web"    
+        - systemctl restart nginx && systemctl status nginx
+
+    only:
+      refs:
+        - master       
+
+    retry:
+      max: 2
+      when: always      
+
+    allow_failure: true
+    when: on_success    
+    after_script:
+        - echo "Deploy Package complete..."
+
+cleanup_job:
+    stage: cleanup
+    script:        
+        - rm -rf $CI_BUILDS_DIR/*
+        - rm -rf $CI_BUILDS_DIR/*.  && ls -ltr  $CI_BUILDS_DIR/    
+        - exit 0
+    when: always
