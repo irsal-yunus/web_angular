@@ -35,8 +35,11 @@ install_dependencies:
         url: http://188.166.214.118/app
     tags:
         - s1
-    script:
-      - npm cache clean --force
+
+    before_script:
+        - npm cache clean --force
+
+    script:      
       - npm install
 
   # Redefine cache to have default pull-push policy
@@ -55,6 +58,9 @@ build:
         url: http://188.166.214.118/app
     tags:
         - s1
+
+    before_script:
+        - npm cache clean --force
 
     script:        
         - ng build --prod --aot --output-hashing=all --base-href /app/
