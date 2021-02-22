@@ -3,6 +3,7 @@ stages:
     - build
     - cleanup_build 
     - deploy
+    - cleanup_deploy
     - cleanup
     
 
@@ -168,6 +169,13 @@ deploy:
     when: on_success    
     after_script:
         - echo "Deploy Package complete..."
+
+cleanup_deploy_job:
+    stage: cleanup_deploy
+    script:
+        - rm -rf /var/www/html/app/*
+        - exit 0
+    when: on_failure
 
 cleanup_job:
     stage: cleanup
