@@ -1,19 +1,57 @@
+stages:    
+    - install
+    - build
+    - cleanup_build 
+    - deploy
+    - cleanup
+    
+
 variables:
   GIT_CLONE_PATH: $CI_BUILDS_DIR
+  APP_OUTPUT_PATH: "$CI_PROJECT_DIR/dist/app"
   GIT_SUBMODULE_STRATEGY: recursive 
 
 cache:
     key:
       files:      
+         - package-lock.json
          - package.json
     paths:
       - node_modules 
+    policy: pull
 
-stages:    
-    - build
-    - cleanup_build  
-    - deploy
-    - cleanup     
+.dependencies_cache:
+  cache:
+    key:
+      files:
+        - package-lock.json
+        - package.json
+    paths:
+      - node_modules
+    policy: pull
+
+install_dependencies:
+    stage: install
+    environment:
+        name: staging
+        url: http://188.166.214.118/app
+    tags:
+        - s1
+
+    before_script:
+        - npm cache clean --force
+
+    script:      
+      - npm install
+
+  # Redefine cache to have default pull-push policy
+    extends: .dependencies_cache
+    cache:
+      policy: pull-push
+    only:
+      changes:
+        - package-lock.json 
+        - package.json  
 
 build:
     stage: build
@@ -22,55 +60,32 @@ build:
         url: http://188.166.214.118/app
     tags:
         - s1
-    artifacts: 
-      public: true
-      when: on_success     
+
+    before_script:
+        - npm cache clean --force
+        
+
+    script:        
+        - pwd && cd $CI_BUILDS_DIR
+        - rm -rf $CI_BUILDS_DIR/package-lock.json
+        - rm -rf $CI_BUILDS_DIR/node_modules 
+        - npm install --force
+        - ng build --prod --aot --output-hashing=all --base-href /app/
+
+    after_script:                 
+        - echo "Build application complete" 
+
+    artifacts:
+      name: "app"
       paths:
-        - dist/
-    before_script:   
-        - git submodule sync --recursive
-        - git submodule update --init --recursive
-        - git pull origin $CI_COMMIT_BRANCH    
-
-    rules:
-      - if: '$CI_PIPELINE_SOURCE == "push" && $CI_COMMIT_BRANCH'
-      - if: '$CI_COMMIT_BRANCH == "master"'
-        when: on_success          
-        allow_failure: true
-      - if: '$CI_MERGE_REQUEST_SOURCE_BRANCH_NAME =~ /^src/ && $CI_MERGE_REQUEST_TARGET_BRANCH_NAME == "master"'
-        when: always
-      - if: '$CI_MERGE_REQUEST_SOURCE_BRANCH_NAME =~ /^src/'
-        when: manual
-        allow_failure: true
-      - if: '$CI_MERGE_REQUEST_SOURCE_BRANCH_NAME'      
-      - if: '$CI_COMMIT_TAG != ""'   
-
-    script: 
-        - |
-          if [ ! ${#TERM} > 0 ]; then
-            export TERM=xterm;
-          else
-            echo "Environment variable TERM already defined!";            
-            npm uninstall -g angular-cli;
-            npm cache clean --force;
-            rm -rf /usr/local/bin/ng;
-            rm -rf /usr/bin/ng;            
-            npm install -g @angular/cli@10.0.1;
-          fi
-        - echo -e "export PATH=$(npm prefix -g)/bin:$PATH" >> ~/.bashrc
-        - source ~/.bashrc        
-        - pwd && cd $CI_BUILDS_DIR                   
-        - rm package-lock.json 
-        - npm install   
-        - ng --version      
-        - ng build --prod --base-href /app/
+        - $APP_OUTPUT_PATH
+    extends: .dependencies_cache
 
     retry:
       max: 2
       when: always
     allow_failure: true        
-    after_script:                 
-        - echo "Build application complete"    
+       
 
 cleanup_build_job:
     stage: cleanup_build
@@ -158,15 +173,6 @@ cleanup_job:
     stage: cleanup
     script:        
         - rm -rf $CI_BUILDS_DIR/*
-        - rm -rf $CI_BUILDS_DIR/*.        
+        - rm -rf $CI_BUILDS_DIR/*.  && ls -ltr  $CI_BUILDS_DIR/    
         - exit 0
     when: always
-
-
-    
-
-
-
-    
-
-
