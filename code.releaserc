@@ -1,0 +1,4 @@
+module.exports = {
+    repositoryUrl: 'https://gitlab.com/irsalyunus/web_angular.git',
+    branches: ['master'],
+}
